@@ -44,13 +44,11 @@ struct data
 int main(int argc, char **argv)
 {
 	unsigned short count;
-	//unsigned short tiff_tag;
 	FILE *f = fopen(argv[1], "rb");
 	struct exifHeader header;
 	struct tiffTag tiff_tag;
 	struct data img_data;
 	fread(&header, sizeof(header), 1, f); //read exif header into struct elements
-//	printf("%x", header.offset);
 
 	//verifying that there isn't a app0 section prior to app1
 	if(header.app1_marker == 0xe0ff)
@@ -59,55 +57,119 @@ int main(int argc, char **argv)
 	}
 	
 	fread(&count, 2, 1, f); //read in count at offset 20
-//	printf("%d\n", ftell(f));
-//	printf("%x\n", count);
+	
 	int i = 0;
 	for (i; i < count; i++) //loop through all tags in the first exif block
 	{
 		fread(&tiff_tag, sizeof(tiff_tag), 1, f);
-		//unsigned short tag_identifier = tiff_tag.tag_identifier;
 		if(tiff_tag.tag_identifier == 0x010f)
 		{
-		//	printf("%d\n", tiff_tag.value_or_offset_data);
 			int currentPos = ftell(f);
 			fseek(f, tiff_tag.value_or_offset_data+12, SEEK_SET);
+
 			int j = 0;
 			for(j; j < tiff_tag.num_data_items; j++)
 			{
 				img_data.manu_string[j] = getc(f);
 			}
-			printf("%s\n", img_data.manu_string);
 
 			fseek(f, currentPos, SEEK_SET);
 		}
 		else if (tiff_tag.tag_identifier == 0x0110)
 		{
-			//printf("kek\n");
 			int currentPos = ftell(f);
 			fseek(f, tiff_tag.value_or_offset_data+12, SEEK_SET);
+
 			int j = 0;
 			for(j; j < tiff_tag.num_data_items; j++)
 			{
 				img_data.camera_model_string[j] = getc(f);
 			}
-			printf("%s\n", img_data.camera_model_string);
+			
 			fseek(f, currentPos, SEEK_SET);
 		}
 		else if (tiff_tag.tag_identifier == 0x8769)
 		{
-			//use fseek to change point in file to next exif block
-			//use tag.value_or_offset + 12 as the numeric parameter in fseek()
+			fseek(f, tiff_tag.value_or_offset_data+12, SEEK_SET);
+			i = count; //break out of loop
 		}
 	}
 	
+	fread(&count, 2, 1, f); //read in TIFF count of next exif block
+	
+	i = 0;
+	for(i; i < count; i++)
+	{
+		fread(&tiff_tag, sizeof(tiff_tag), 1, f); //read in next TIFF tag
 
+		if(tiff_tag.tag_identifier == 0xa002)
+		{
+			img_data.width = tiff_tag.value_or_offset_data;
+		}
+		else if(tiff_tag.tag_identifier == 0xa003)
+		{
+			img_data.height = tiff_tag.value_or_offset_data;
+		}
+		else if(tiff_tag.tag_identifier == 0x8827)
+		{
+			img_data.iso_speed = tiff_tag.value_or_offset_data;
+		}
+		else if(tiff_tag.tag_identifier == 0x829a)
+		{
+			int currentPos = ftell(f);
+			fseek(f, tiff_tag.value_or_offset_data+12, SEEK_SET);
+			
+			fread(&img_data.exposure_speed_numerator, 4, 1, f);
+			fread(&img_data.exposure_speed_denom, 4, 1, f);
 
+			fseek(f, currentPos, SEEK_SET);
+		}
+		else if(tiff_tag.tag_identifier == 0x829d)
+		{
+			int currentPos = ftell(f);
+			fseek(f, tiff_tag.value_or_offset_data+12, SEEK_SET);
+			
+			fread(&img_data.fstop_numerator, 4, 1, f);
+			fread(&img_data.fstop_denom, 4, 1, f);
 
+			fseek(f, currentPos, SEEK_SET);
+			
+		}
+		else if(tiff_tag.tag_identifier == 0x920a)
+		{
+			int currentPos = ftell(f);
+			fseek(f, tiff_tag.value_or_offset_data+12, SEEK_SET);
+			
+			fread(&img_data.lens_focal_numerator, 4, 1, f);
+			fread(&img_data.lens_focal_denom, 4, 1, f);
 
+			fseek(f, currentPos, SEEK_SET);
+		}
+		else if(tiff_tag.tag_identifier == 0x9003)
+		{
+			int currentPos = ftell(f);
+			fseek(f, tiff_tag.value_or_offset_data+12, SEEK_SET);
+			int j = 0;
+			for(j; j < tiff_tag.num_data_items; j++)
+			{
+				img_data.date[j] = getc(f);
+			}
 
+			fseek(f, currentPos, SEEK_SET);
+		}
+	}
 
+	float fstop = ((float) img_data.fstop_numerator)/img_data.fstop_denom; //get fstop's float value
 
-
+	printf("\nManufacturer:\t%s\n", img_data.manu_string);
+	printf("Model:\t\t%s\n", img_data.camera_model_string);
+	printf("Exposure Time:\t%d/%d second\n", img_data.exposure_speed_numerator, img_data.exposure_speed_denom);
+	printf("F-stop:\t\tf/%.3g\n", fstop);
+	printf("ISO:\t\tISO %d\n", img_data.iso_speed);
+	printf("Date Taken:\t%s\n", img_data.date);
+	printf("Focal Length:\t%d mm\n", img_data.lens_focal_numerator/img_data.lens_focal_denom);
+	printf("Width:\t\t%d pixels\n", img_data.width);
+	printf("Height:\t\t%d pixels\n", img_data.height);
 
 	return 0;
 }
