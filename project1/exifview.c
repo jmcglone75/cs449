@@ -39,16 +39,17 @@ struct data
 	unsigned int lens_focal_denom;
 	unsigned char date[40];
 
-}
+};
 
 int main(int argc, char **argv)
 {
 	unsigned short count;
-	unsigned short tiff_tag;
+	//unsigned short tiff_tag;
 	FILE *f = fopen(argv[1], "rb");
 	struct exifHeader header;
 	struct tiffTag tiff_tag;
-	fread(&header, 20, 1, f); //read exif header into struct elements
+	struct data img_data;
+	fread(&header, sizeof(header), 1, f); //read exif header into struct elements
 //	printf("%x", header.offset);
 
 	//verifying that there isn't a app0 section prior to app1
@@ -56,25 +57,46 @@ int main(int argc, char **argv)
 	{
 		printf("APP0 found before APP1.\n");
 	}
-
+	
 	fread(&count, 2, 1, f); //read in count at offset 20
+//	printf("%d\n", ftell(f));
 //	printf("%x\n", count);
 	int i = 0;
 	for (i; i < count; i++) //loop through all tags in the first exif block
 	{
-		fread(&tiff_tag, 12, 1, image);
-		unsigned short tag_identifier = tiff_tag.tag_identifier;
-		if(tag_indetifier == 0x010f)
+		fread(&tiff_tag, sizeof(tiff_tag), 1, f);
+		//unsigned short tag_identifier = tiff_tag.tag_identifier;
+		if(tiff_tag.tag_identifier == 0x010f)
 		{
+		//	printf("%d\n", tiff_tag.value_or_offset_data);
+			int currentPos = ftell(f);
+			fseek(f, tiff_tag.value_or_offset_data+12, SEEK_SET);
+			int j = 0;
+			for(j; j < tiff_tag.num_data_items; j++)
+			{
+				img_data.manu_string[j] = getc(f);
+			}
+			printf("%s\n", img_data.manu_string);
 
+			fseek(f, currentPos, SEEK_SET);
 		}
-		else if (tag_identifier == 0x0110)
+		else if (tiff_tag.tag_identifier == 0x0110)
 		{
-
+			//printf("kek\n");
+			int currentPos = ftell(f);
+			fseek(f, tiff_tag.value_or_offset_data+12, SEEK_SET);
+			int j = 0;
+			for(j; j < tiff_tag.num_data_items; j++)
+			{
+				img_data.camera_model_string[j] = getc(f);
+			}
+			printf("%s\n", img_data.camera_model_string);
+			fseek(f, currentPos, SEEK_SET);
 		}
-		else if (tag_identifier == 0x8769)
+		else if (tiff_tag.tag_identifier == 0x8769)
 		{
-		
+			//use fseek to change point in file to next exif block
+			//use tag.value_or_offset + 12 as the numeric parameter in fseek()
 		}
 	}
 	
