@@ -11,7 +11,7 @@ struct exifHeader
 	unsigned short app1_length; //size is 2 bytes
 	unsigned char exif_string[4]; //4 bytes
 	unsigned short zero_byte;
-	unsigned short endianess;
+	unsigned char endianess[2];
 	unsigned short version_num;
 	unsigned int offset; //size is 4 bytes
 };
@@ -54,6 +54,16 @@ int main(int argc, char **argv)
 	if(header.app1_marker == 0xe0ff)
 	{
 		printf("APP0 found before APP1.\n");
+	}
+
+	if(strcmp(header.exif_string, "Exif") != 0)
+	{
+		printf("Error: Tag was not found.\n");
+	}
+
+	if(strcmp(header.endianess, "II*") != 0)
+	{
+		printf("Cannot support this type of endianess\n");
 	}
 	
 	fread(&count, 2, 1, f); //read in count at offset 20
