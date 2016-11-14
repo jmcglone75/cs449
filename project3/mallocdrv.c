@@ -78,6 +78,7 @@ void test1()
 	int i;
  	
 	struct tree *head = (struct tree *)MALLOC(sizeof(struct tree));
+	dump_heap();
 	head->data = 0;
 	head->left = NULL;
 	head->right = NULL;

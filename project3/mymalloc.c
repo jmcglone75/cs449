@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#nclude <stdlib.h>
 #include <sys/mman.h>
 #include <assert.h>
 #include <math.h>
@@ -9,6 +9,8 @@ static void *base = NULL;
 static struct Block *free_list[26];
 
 void *split(int size, struct Block *block);
+void dump_heap();
+void *my_buddy_mallloc(int size);
 
 struct Block
 {
@@ -30,13 +32,13 @@ void* my_buddy_malloc(int size)
 	int closest_block_size = pow(2, (ceil(log(size+1)/log(2)))); //calculate closest power of 2 block size
 	int index_freelist = (log(closest_block_size)/log(2)) - 5; //calculate the index of our free list for the block size
 	struct Block *return_block = NULL;
-	
+	int index = index_freelist;	
 	while(index_freelist <= 25 && return_block == NULL)
 	{
 		if(free_list[index_freelist] != NULL)
 		{
 			//call split
-			return_block = split(index_freelist, free_list[index_freelist]);
+			return_block = split(index, free_list[index_freelist]);
 			return_block->header = return_block->header | 1;  //set occ bit to 1 -- meaning occupied
 		}
 		else
@@ -45,7 +47,8 @@ void* my_buddy_malloc(int size)
 		}
 	}
 	return ((char *) return_block) + 1;
-	
+
+ return NULL;
 
 }
 
@@ -81,9 +84,9 @@ void *split(int target_size, struct Block *block)
 		struct Block *front = free_list[block_size - 1];
 		if(front == NULL) //add block and buddy to free list. block->buddy
 		{
-			free_list[block_size - 1] = block;
 			block->next = buddy;
 			buddy->prev = block;
+			free_list[block_size - 1] = block;
 		}
 		else //add both block and buddy to the beggining of free list.  block->buddy->rest of free_list
 		{
@@ -98,3 +101,39 @@ void *split(int target_size, struct Block *block)
 	}
 
 }
+
+void dump_heap()
+{
+	int i = 0;
+	for (i; i <= 25; i++)
+	{
+		struct Block *curr = free_list[i];
+		printf("%d->", i);
+		while(curr != NULL)
+		{
+			//print node
+			printf("[%d:%d:%f]->", (curr->header & 1), ((char *)curr - (char *)base), pow(2, (curr->header >> 1)));
+			curr = curr->next;
+		}
+		printf("NULL\n");
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
