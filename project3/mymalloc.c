@@ -1,4 +1,4 @@
-#nclude <stdlib.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 #include <assert.h>
 #include <math.h>
@@ -77,10 +77,12 @@ void *split(int target_size, struct Block *block)
 	}
 	else
 	{
-		struct Block *buddy = (void *)((uintptr_t) block ^ (uintptr_t)pow(2, target_size+5)); //gives you pointer to buddy in middle
+		//probably not working 
+     		//struct Block *buddy = (void *)((uintptr_t) block ^ (uintptr_t)pow(2, block_size+5)); //gives you pointer to buddy in middle
+		
+		struct Block *buddy = (struct Block *) (((char *)block) + (1 << (block_size + 5 - 1)));
 		block->header = (block_size + 5 - 1) << 1;
 		buddy->header = (block_size + 5 - 1) << 1;
-
 		struct Block *front = free_list[block_size - 1];
 		if(front == NULL) //add block and buddy to free list. block->buddy
 		{
@@ -108,7 +110,7 @@ void dump_heap()
 	for (i; i <= 25; i++)
 	{
 		struct Block *curr = free_list[i];
-		printf("%d->", i);
+		printf("%d->", i+5);
 		while(curr != NULL)
 		{
 			//print node
