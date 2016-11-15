@@ -1,11 +1,26 @@
 #include <stdio.h>
-
+#include "mymalloc.h"
+struct Node{
+	int data;
+	long long kek;
+};
 int main()
 {
-	void *ptr = my_buddy_malloc(256);
+	struct Node *curr =(struct Node *) my_buddy_malloc(sizeof(struct Node));
 	dump_heap();
-	printf("\nsecond alloc: \n");
-	ptr = my_buddy_malloc(256);
+	curr->data = 1;
+	curr->kek = 1000;
+//	printf("\n%p\n", ptr);
+/*	ptr = my_buddy_malloc(100);
 	dump_heap();
+	printf("\nthird alloc: \n");
+	ptr = my_buddy_malloc(100);
+	dump_heap();
+	printf("\n\n");
+	ptr = my_buddy_malloc(30);
+	dump_heap();
+	printf("\n\n");
+	ptr = my_buddy_malloc(30);
+	dump_heap();*/
 	return 0;
 }

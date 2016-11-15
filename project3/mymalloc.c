@@ -4,20 +4,12 @@
 #include <math.h>
 #include <stdint.h>
 #define MAX_MEM 1<<30
+#include "mymalloc.h"
 
 static void *base = NULL;
 static struct Block *free_list[26];
 
-void *split(int size, struct Block *block);
-void dump_heap();
-void *my_buddy_mallloc(int size);
 
-struct Block
-{
-	unsigned char header;
-	struct Block *next;
-	struct Block *prev;
-};
 
 void* my_buddy_malloc(int size)
 {
@@ -30,6 +22,13 @@ void* my_buddy_malloc(int size)
 	assert(base != NULL);
 
 	int closest_block_size = pow(2, (ceil(log(size+1)/log(2)))); //calculate closest power of 2 block size
+
+	if (closest_block_size < 32)
+	{
+		closest_block_size = 32; //can't allocate a smaller block size than 32, (e.g. 16 or 8), so make it 32 even if its < 32.
+	}
+
+
 	int index_freelist = (log(closest_block_size)/log(2)) - 5; //calculate the index of our free list for the block size
 	struct Block *return_block = NULL;
 	int index = index_freelist;	
@@ -46,9 +45,11 @@ void* my_buddy_malloc(int size)
 			index_freelist++;
 		}
 	}
-	return ((char *) return_block) + 1;
+	//printf("%p\n", ((char *) return_block) + 1);
+	//printf("%p\n", return_block+1);
+	return ((char *)return_block) + 1;
 
- return NULL;
+ //return NULL;
 
 }
 
@@ -114,7 +115,7 @@ void dump_heap()
 		while(curr != NULL)
 		{
 			//print node
-			printf("[%d:%d:%f]->", (curr->header & 1), ((char *)curr - (char *)base), pow(2, (curr->header >> 1)));
+			printf("[%d : %d : %f]->", (curr->header & 1), ((char *)curr - (char *)base), pow(2, (curr->header >> 1)));
 			curr = curr->next;
 		}
 		printf("NULL\n");
