@@ -56,17 +56,115 @@ void* my_buddy_malloc(int size)
 void my_free(void *ptr)
 {
 	assert(base != NULL);
+
+	struct Block *block = ((char *)ptr - 1); //gives pointer to header of block
+	struct Block* buddy;
+
+//	dump_heap();
+
+	block->header = block->header & ~((char) 1); //set occupancy bit to 0
+	int block_size = (block->header >> 1) - 5;
+	int coalesce = 1;
+	
+	//add to freelist
+	if (free_list[block_size] == NULL)
+	{
+		free_list[block_size] = block;
+	}
+	else
+	{
+		block->next = free_list[block_size];
+		free_list[block_size]->prev = block;
+		free_list[block_size] = block;
+	}
+
+//	dump_heap();
+
+	while(coalesce && block_size < 25)
+	{
+		int size = block->header >> 1;
+		block_size = size-5;
+		buddy = (((char *)block - (char *)base) ^ (1 << size)) + ((char *)base);
+
+		if (buddy->header & 1) //if occupied
+		{
+			coalesce = 0;
+		}
+		else //not occupied -- coalesce
+		{
+			//remove block
+			if(block == free_list[size-5])
+			{
+				free_list[size-5] = block->next;
+			}
+			else if(block->next == NULL)
+			{
+				block->prev->next = NULL;
+			}
+			else
+			{
+				block->prev->next = block->next;
+				block->next->prev = block->prev;
+			}
+			
+//			printf("removed block\n");
+//			dump_heap();
+			//remove buddy
+			if(buddy == free_list[size-5])
+			{
+				free_list[size-5] = buddy->next;
+			}
+			else if(buddy->next == NULL)
+			{
+				buddy->prev->next = NULL;
+			}
+			else
+			{
+				buddy->prev->next = buddy->next;
+				buddy->next->prev = buddy->prev;
+			}
+
+//			printf("removed buddy\n");
+//			dump_heap();
+
+			if (block < buddy)
+			{
+				block->header = ((block->header >> 1) + 1) << 1;
+			}
+			else
+			{
+				buddy->header = ((buddy->header >> 1) + 1) << 1;
+				block = buddy;
+			}
+
+			if (free_list[size-5+1] == NULL)
+			{
+				free_list[size-5+1] = block;
+			}
+			else
+			{
+				block->next = free_list[size-5+1];
+				free_list[size-5+1]->prev = block;
+				free_list[size-5+1] = block;
+			}
+
+			printf("coalesce\n\n");
+			dump_heap();
+
+		}
+	}
+
 }
 
 void *split(int target_size, struct Block *block)
 {
 	int block_size = (block->header >> 1) - 5;
 	//remove current block from free_list
-	if(free_list[block_size]->next == NULL)
+	if(free_list[block_size]->next == NULL) //only block in freelist
 	{
 		free_list[block_size] = NULL;
 	}
-	else
+	else //more than one block in free list.  remove first one and make head of list the next one
 	{			
 		free_list[block_size] = free_list[block_size]->next;
 		free_list[block_size]->prev = NULL;

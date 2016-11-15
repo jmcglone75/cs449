@@ -9,7 +9,7 @@
 //replace malloc here with the appropriate version of mymalloc
 #define MALLOC my_buddy_malloc
 //replace free here with the appropriate version of myfree
-#define FREE free
+#define FREE my_free
 
 //You can adjust how many things are allocated
 #define TIMES 100
@@ -29,6 +29,7 @@ struct tree {
 
 void freetree(struct tree *root)
 {
+//	dump_heap();
 	if(root->left != NULL)
 		freetree(root->left);
 	if(root->right != NULL)
@@ -78,7 +79,7 @@ void test1()
 	int i;
  	
 	struct tree *head = (struct tree *)MALLOC(sizeof(struct tree));
-	dump_heap();
+//	dump_heap();
 	head->data = 0;
 	head->left = NULL;
 	head->right = NULL;
@@ -93,6 +94,7 @@ void test1()
 	}
 
 	printtree(head);
+//	dump_heap();
 	freetree(head);
 }
 
