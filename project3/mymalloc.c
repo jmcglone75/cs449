@@ -70,12 +70,15 @@ void my_free(void *ptr)
 	if (free_list[block_size] == NULL)
 	{
 		free_list[block_size] = block;
+		block->next = NULL;
+		block->prev = NULL;
 	}
 	else
 	{
 		block->next = free_list[block_size];
 		free_list[block_size]->prev = block;
 		free_list[block_size] = block;
+		block->prev = NULL;
 	}
 
 //	dump_heap();
@@ -129,16 +132,19 @@ void my_free(void *ptr)
 
 			if (block < buddy)
 			{
-				block->header = ((block->header >> 1) + 1) << 1;
+				block->header = (size + 1) << 1;
 			}
 			else
 			{
-				buddy->header = ((buddy->header >> 1) + 1) << 1;
+				buddy->header = (size + 1) << 1;
 				block = buddy;
 			}
-
+			
+			block->next = NULL;
+			block->prev = NULL;
 			if (free_list[size-5+1] == NULL)
 			{
+				block->next == NULL;
 				free_list[size-5+1] = block;
 			}
 			else

@@ -12,7 +12,7 @@ int main()
 	curr->kek = 1000;
 //	dump_heap();
 	my_free(curr);
-	dump_heap();
+//	dump_heap();
 //	printf("\n%p\n", ptr);
 /*	ptr = my_buddy_malloc(100);
 	dump_heap();
