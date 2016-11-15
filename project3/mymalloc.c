@@ -115,7 +115,7 @@ void dump_heap()
 		while(curr != NULL)
 		{
 			//print node
-			printf("[%d : %d : %f]->", (curr->header & 1), ((char *)curr - (char *)base), pow(2, (curr->header >> 1)));
+			printf("[%d : %d : %.0f]->", (curr->header & 1), ((char *)curr - (char *)base), pow(2, (curr->header >> 1)));
 			curr = curr->next;
 		}
 		printf("NULL\n");
