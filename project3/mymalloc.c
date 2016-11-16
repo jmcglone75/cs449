@@ -99,6 +99,9 @@ void my_free(void *ptr)
 			if(block == free_list[size-5])
 			{
 				free_list[size-5] = block->next;
+
+				if(block->next != NULL)
+					free_list[size-5]->prev = NULL;
 			}
 			else if(block->next == NULL)
 			{
@@ -116,8 +119,11 @@ void my_free(void *ptr)
 			if(buddy == free_list[size-5])
 			{
 				free_list[size-5] = buddy->next;
+
+				if(buddy->next != NULL)
+					free_list[size-5]->prev = NULL;
 			}
-			else if(buddy->next == NULL)
+			else if(buddy->next == NULL && buddy->prev != NULL)
 			{
 				buddy->prev->next = NULL;
 			}
@@ -142,6 +148,8 @@ void my_free(void *ptr)
 			
 			block->next = NULL;
 			block->prev = NULL;
+			buddy->next = NULL;
+			buddy->prev = NULL;
 			if (free_list[size-5+1] == NULL)
 			{
 				block->next == NULL;
