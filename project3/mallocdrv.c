@@ -130,10 +130,11 @@ int main()
 {
 //	srand((unsigned int)time(NULL));
 	printf("original val brk: %p\n", sbrk(0));
-	test1();
+//	test1();
 	printf("brk after  test1: %p\n", sbrk(0));
+//	dump_heap();
 	test2();
-	dump_heap();
+//	dump_heap();
 	printf("brk after  test2: %p\n", sbrk(0));
 	
 

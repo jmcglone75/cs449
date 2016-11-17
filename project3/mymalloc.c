@@ -58,116 +58,118 @@ void my_free(void *ptr)
 	assert(base != NULL);
 
 	struct Block *block = ((char *)ptr) - 1; //gives pointer to header of block
-	struct Block* buddy;
+	struct Block *buddy;
 
 //	dump_heap();
 
-	block->header = block->header & ~((char) 1); //set occupancy bit to 0
+//	block->header = block->header & ~((char) 1); //set occupancy bit to 0
 	int size = (block->header >> 1);
-	int coalesce = 1;
-	
-	//add to freelist
-	if (free_list[size-5] == NULL)
+//	int coalesce = 1;
+	if(block->header & 1)
 	{
-		//free_list[size - 5] = block;
-		block->next = NULL;
-		block->prev = NULL;
-		free_list[size - 5] = block;
-	}
-	else
-	{
-	//	block->next = free_list[size - 5];
-		free_list[size - 5]->prev = block;
-		block->next = free_list[size - 5];
-		free_list[size - 5] = block;
-		block->prev = NULL;
+		block->header = block->header & ~((char) 1);
+		if (free_list[size-5] == NULL)
+		{
+			//free_list[size - 5] = block;
+			block->next = NULL;
+			block->prev = NULL;
+			free_list[size - 5] = block;
+		}
+		else
+		{
+		//	block->next = free_list[size - 5];
+			free_list[size - 5]->prev = block;
+			block->next = free_list[size - 5];
+			free_list[size - 5] = block;
+			block->prev = NULL;
+		}
 	}
 
 //	dump_heap();
 
-	while(coalesce && size < 29)
+//	size = (block->header >> 1);
+	//block_size = size-5;
+	buddy = (((char *)block - (char *)base) ^ (1 << size)) + ((char *)base);
+
+	//base case - buddy is occupied or the size is 30
+	if (buddy->header & 1 || size == 30) 		
 	{
-		size = (block->header >> 1);
-		//block_size = size-5;
-		buddy = (((char *)block - (char *)base) ^ (1 << size)) + ((char *)base);
-
-		if (buddy->header & 1) //if occupied
+		return;
+	}
+	else //not occupied -- coalesce
+	{
+		//remove block
+		if(block == free_list[size-5])
 		{
-			coalesce = 0;
+			free_list[size-5] = block->next;
+			if(free_list[size - 5] != NULL)
+			{
+				free_list[size-5]->prev = NULL;
+			}
 		}
-		else //not occupied -- coalesce
+		else if(block->next == NULL)
 		{
-			//remove block
-			if(block == free_list[size-5])
-			{
-				free_list[size-5] = block->next;
-
-				if(free_list[size - 5] != NULL)
-					free_list[size-5]->prev = NULL;
-			}
-			else if(block->next == NULL)
-			{
-				block->prev->next = NULL;
-			}
-			else
-			{
-				block->prev->next = block->next;
-				block->next->prev = block->prev;
-			}
+			block->prev->next = NULL;
+		}
+		else
+		{
+			block->prev->next = block->next;
+			block->next->prev = block->prev;
+		}
 			
-//			printf("removed block\n");
-//			dump_heap();
-			//remove buddy
-			if(buddy == free_list[size-5])
+//		printf("removed block\n");
+//		dump_heap();
+//remove buddy
+		if(buddy == free_list[size-5])
+		{
+			free_list[size-5] = buddy->next;
+			if(free_list[size-5] != NULL)
 			{
-				free_list[size-5] = buddy->next;
-
-				if(free_list[size-5] != NULL)
-					free_list[size-5]->prev = NULL;
+				free_list[size-5]->prev = NULL;
 			}
-			else if(buddy->next == NULL && buddy->prev != NULL)
-			{
-				buddy->prev->next = NULL;
-			}
-			else
-			{
-				buddy->prev->next = buddy->next;
-				buddy->next->prev = buddy->prev;
-			}
+		}
+		else if(buddy->next == NULL && buddy->prev != NULL)
+		{
+			buddy->prev->next = NULL;
+		}
+		else
+		{
+			buddy->prev->next = buddy->next;
+			buddy->next->prev = buddy->prev;
+		}
 
 //			printf("removed buddy\n");
 //			dump_heap();
-			block->next = NULL;
-			block->prev = NULL;
-			buddy->next = NULL;
-			buddy->prev = NULL;
+		block->next = NULL;
+		block->prev = NULL;
+		buddy->next = NULL;
+		buddy->prev = NULL;
 
-			if (block < buddy)
-			{
-				block->header = ((size + 1) << 1);
-			}
-			else
-			{
-				buddy->header = ((size + 1) << 1);
-				block = buddy;
-			}
-			
-			if (free_list[size-5+1] == NULL)
-			{
-				block->next == NULL;
-				free_list[size-5+1] = block;
-			}
-			else
-			{
-				free_list[size-5+1]->prev = block;
-				block->next = free_list[size-5+1];
-				free_list[size-5+1] = block;
-			}
-
-			printf("coalesce\n\n");
-			dump_heap();
-
+		if (block < buddy)
+		{
+			block->header = ((size + 1) << 1);
 		}
+		else
+		{
+			buddy->header = ((size + 1) << 1);
+			block = buddy;
+		}		
+		if (free_list[size-5+1] == NULL)
+		{
+			block->next == NULL;
+			free_list[size-5+1] = block;
+		}
+		else
+		{
+			free_list[size-5+1]->prev = block;
+			block->next = free_list[size-5+1];
+			free_list[size-5+1] = block;
+		}
+
+		printf("coalesce\n\n");
+		dump_heap();
+		my_free(((char *)block) + 1);
+		
 	}
 
 }
