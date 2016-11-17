@@ -57,36 +57,38 @@ void my_free(void *ptr)
 {
 	assert(base != NULL);
 
-	struct Block *block = ((char *)ptr - 1); //gives pointer to header of block
+	struct Block *block = ((char *)ptr) - 1; //gives pointer to header of block
 	struct Block* buddy;
 
 //	dump_heap();
 
 	block->header = block->header & ~((char) 1); //set occupancy bit to 0
-	int block_size = (block->header >> 1) - 5;
+	int size = (block->header >> 1);
 	int coalesce = 1;
 	
 	//add to freelist
-	if (free_list[block_size] == NULL)
+	if (free_list[size-5] == NULL)
 	{
-		free_list[block_size] = block;
+		//free_list[size - 5] = block;
 		block->next = NULL;
 		block->prev = NULL;
+		free_list[size - 5] = block;
 	}
 	else
 	{
-		block->next = free_list[block_size];
-		free_list[block_size]->prev = block;
-		free_list[block_size] = block;
+	//	block->next = free_list[size - 5];
+		free_list[size - 5]->prev = block;
+		block->next = free_list[size - 5];
+		free_list[size - 5] = block;
 		block->prev = NULL;
 	}
 
 //	dump_heap();
 
-	while(coalesce && block_size < 25)
+	while(coalesce && size < 29)
 	{
-		int size = block->header >> 1;
-		block_size = size-5;
+		size = (block->header >> 1);
+		//block_size = size-5;
 		buddy = (((char *)block - (char *)base) ^ (1 << size)) + ((char *)base);
 
 		if (buddy->header & 1) //if occupied
@@ -100,7 +102,7 @@ void my_free(void *ptr)
 			{
 				free_list[size-5] = block->next;
 
-				if(block->next != NULL)
+				if(free_list[size - 5] != NULL)
 					free_list[size-5]->prev = NULL;
 			}
 			else if(block->next == NULL)
@@ -120,7 +122,7 @@ void my_free(void *ptr)
 			{
 				free_list[size-5] = buddy->next;
 
-				if(buddy->next != NULL)
+				if(free_list[size-5] != NULL)
 					free_list[size-5]->prev = NULL;
 			}
 			else if(buddy->next == NULL && buddy->prev != NULL)
@@ -135,21 +137,21 @@ void my_free(void *ptr)
 
 //			printf("removed buddy\n");
 //			dump_heap();
-
-			if (block < buddy)
-			{
-				block->header = (size + 1) << 1;
-			}
-			else
-			{
-				buddy->header = (size + 1) << 1;
-				block = buddy;
-			}
-			
 			block->next = NULL;
 			block->prev = NULL;
 			buddy->next = NULL;
 			buddy->prev = NULL;
+
+			if (block < buddy)
+			{
+				block->header = ((size + 1) << 1);
+			}
+			else
+			{
+				buddy->header = ((size + 1) << 1);
+				block = buddy;
+			}
+			
 			if (free_list[size-5+1] == NULL)
 			{
 				block->next == NULL;
@@ -157,8 +159,8 @@ void my_free(void *ptr)
 			}
 			else
 			{
-				block->next = free_list[size-5+1];
 				free_list[size-5+1]->prev = block;
+				block->next = free_list[size-5+1];
 				free_list[size-5+1] = block;
 			}
 
@@ -183,9 +185,13 @@ void *split(int target_size, struct Block *block)
 		free_list[block_size] = free_list[block_size]->next;
 		free_list[block_size]->prev = NULL;
 	}
+	
+
 
 	if (block_size == target_size) //checks to see if size in freelist is same as size needed for allocation
 	{
+		block->prev = NULL;
+		block->next = NULL;
 		return block;
 	}
 	else
@@ -196,8 +202,13 @@ void *split(int target_size, struct Block *block)
 		struct Block *buddy = (struct Block *) (((char *)block) + (1 << (block_size + 5 - 1)));
 		block->header = (block_size + 5 - 1) << 1;
 		buddy->header = (block_size + 5 - 1) << 1;
-		struct Block *front = free_list[block_size - 1];
-		if(front == NULL) //add block and buddy to free list. block->buddy
+
+/*		block->next = NULL;
+		block->prev = NULL;
+		buddy->next = NULL;
+		buddy->prev = NULL;*/
+//		struct Block *front = free_list[block_size - 1];
+		if(free_list[block_size - 1] == NULL) //add block and buddy to free list. block->buddy
 		{
 			block->next = buddy;
 			buddy->prev = block;
