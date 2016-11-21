@@ -6,7 +6,8 @@ Peoplesoft: 4007177
 -It succesfully allocates and frees/coalesces a 32 byte block, 
 which is being done in test.c .  I put in a dump_heap() method before
 the my_buddy_malloc(), after the alloc, and then after the free to show
-that it does this correctly.
+that it does this correctly.  When testing I put the dump_head() method
+in my_free() to show the coalescing at each step.  This ensured me it was working
 
 -For test1 in mallocdrv.c, it succesfully allocates as I have the numbers
 1-100, but it segfaults when I free and I was not able to figure this out.

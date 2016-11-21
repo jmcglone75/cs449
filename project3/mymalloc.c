@@ -5,9 +5,13 @@
 #include <stdint.h>
 #define MAX_MEM 1<<30
 #include "mymalloc.h"
-//Gerard McGlone - Project3
+
 static void *base = NULL;
 static struct Block *free_list[26];
+
+
+
+
 
 void* my_buddy_malloc(int size)
 {
@@ -44,6 +48,7 @@ void* my_buddy_malloc(int size)
 		}
 	}
 	return ((char *)return_block) + 1;
+
 }
 
 void my_free(void *ptr)
@@ -72,8 +77,7 @@ void my_free(void *ptr)
 			block->prev = NULL;
 		}
 	}
-
-
+	//finds buddy using xor
 	buddy = (((char *)block - (char *)base) ^ (1 << size)) + ((char *)base);
 
 	//base case - buddy is occupied or the size is 30
@@ -102,7 +106,6 @@ void my_free(void *ptr)
 			block->next->prev = block->prev;
 		}
 			
-		//remove buddy
 		if(buddy == free_list[size-5])
 		{
 			free_list[size-5] = buddy->next;
