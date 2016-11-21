@@ -5,11 +5,9 @@
 #include <stdint.h>
 #define MAX_MEM 1<<30
 #include "mymalloc.h"
-
+//Gerard McGlone - Project3
 static void *base = NULL;
 static struct Block *free_list[26];
-
-
 
 void* my_buddy_malloc(int size)
 {
@@ -38,19 +36,14 @@ void* my_buddy_malloc(int size)
 		{
 			//call split
 			return_block = split(index, free_list[index_freelist]);
-			return_block->header = return_block->header | 1;  //set occ bit to 1 -- meaning occupied
+			return_block->header = return_block->header | 1;  //set occ bit to 1 -- meaning occupied	
 		}
 		else
 		{
 			index_freelist++;
 		}
 	}
-	//printf("%p\n", ((char *) return_block) + 1);
-	//printf("%p\n", return_block+1);
 	return ((char *)return_block) + 1;
-
- //return NULL;
-
 }
 
 void my_free(void *ptr)
@@ -60,24 +53,19 @@ void my_free(void *ptr)
 	struct Block *block = ((char *)ptr) - 1; //gives pointer to header of block
 	struct Block *buddy;
 
-//	dump_heap();
 
-//	block->header = block->header & ~((char) 1); //set occupancy bit to 0
 	int size = (block->header >> 1);
-//	int coalesce = 1;
 	if(block->header & 1)
 	{
 		block->header = block->header & ~((char) 1);
 		if (free_list[size-5] == NULL)
 		{
-			//free_list[size - 5] = block;
 			block->next = NULL;
 			block->prev = NULL;
 			free_list[size - 5] = block;
 		}
 		else
 		{
-		//	block->next = free_list[size - 5];
 			free_list[size - 5]->prev = block;
 			block->next = free_list[size - 5];
 			free_list[size - 5] = block;
@@ -85,10 +73,7 @@ void my_free(void *ptr)
 		}
 	}
 
-//	dump_heap();
 
-//	size = (block->header >> 1);
-	//block_size = size-5;
 	buddy = (((char *)block - (char *)base) ^ (1 << size)) + ((char *)base);
 
 	//base case - buddy is occupied or the size is 30
@@ -117,9 +102,7 @@ void my_free(void *ptr)
 			block->next->prev = block->prev;
 		}
 			
-//		printf("removed block\n");
-//		dump_heap();
-//remove buddy
+		//remove buddy
 		if(buddy == free_list[size-5])
 		{
 			free_list[size-5] = buddy->next;
@@ -138,8 +121,6 @@ void my_free(void *ptr)
 			buddy->next->prev = buddy->prev;
 		}
 
-//			printf("removed buddy\n");
-//			dump_heap();
 		block->next = NULL;
 		block->prev = NULL;
 		buddy->next = NULL;
@@ -166,8 +147,6 @@ void my_free(void *ptr)
 			free_list[size-5+1] = block;
 		}
 
-		printf("coalesce\n\n");
-		dump_heap();
 		my_free(((char *)block) + 1);
 		
 	}
@@ -198,18 +177,11 @@ void *split(int target_size, struct Block *block)
 	}
 	else
 	{
-		//probably not working 
-     		//struct Block *buddy = (void *)((uintptr_t) block ^ (uintptr_t)pow(2, block_size+5)); //gives you pointer to buddy in middle
 		
 		struct Block *buddy = (struct Block *) (((char *)block) + (1 << (block_size + 5 - 1)));
 		block->header = (block_size + 5 - 1) << 1;
 		buddy->header = (block_size + 5 - 1) << 1;
 
-/*		block->next = NULL;
-		block->prev = NULL;
-		buddy->next = NULL;
-		buddy->prev = NULL;*/
-//		struct Block *front = free_list[block_size - 1];
 		if(free_list[block_size - 1] == NULL) //add block and buddy to free list. block->buddy
 		{
 			block->next = buddy;

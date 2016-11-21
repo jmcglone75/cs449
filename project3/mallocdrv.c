@@ -29,7 +29,6 @@ struct tree {
 
 void freetree(struct tree *root)
 {
-//	dump_heap();
 	if(root->left != NULL)
 		freetree(root->left);
 	if(root->right != NULL)
@@ -79,7 +78,6 @@ void test1()
 	int i;
  	
 	struct tree *head = (struct tree *)MALLOC(sizeof(struct tree));
-//	dump_heap();
 	head->data = 0;
 	head->left = NULL;
 	head->right = NULL;
@@ -94,7 +92,6 @@ void test1()
 	}
 
 	printtree(head);
-//	dump_heap();
 	freetree(head);
 }
 
@@ -128,13 +125,11 @@ void test2()
 
 int main() 
 {
-//	srand((unsigned int)time(NULL));
+	srand((unsigned int)time(NULL));
 	printf("original val brk: %p\n", sbrk(0));
 //	test1();
 	printf("brk after  test1: %p\n", sbrk(0));
-//	dump_heap();
 	test2();
-//	dump_heap();
 	printf("brk after  test2: %p\n", sbrk(0));
 	
 
