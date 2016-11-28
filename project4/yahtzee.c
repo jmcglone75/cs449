@@ -49,7 +49,12 @@ int main()
 			printf("%d  ", upper[j]);
 		}
 //		i = 13;
-		printf("\n");
+		printf("\n\n");
+		for(j = 0; j < 7; j++)
+		{
+			printf("%d  ", lower[j]);
+		}
+		printf("\n\n");
 	}
 
 		
@@ -185,8 +190,6 @@ void assign_score()
 			}
 			upper[upper_category] = sum;
 		}
-
-		while(getchar() != '\n'); //flushes stdin - scanf() does not consume new line char which messes up the next call to fgets()
 	}
 	else
 	{
@@ -208,10 +211,112 @@ void assign_score()
 
 		if(lower_category == 0) //three of a kind
 		{
-			
-		}
-	}
+			int num = rolls[0];
+			int count = 1;
+			int i;
+			for(i = 1; i < 5; i++)
+			{
+				if(rolls[i] == num)
+				{
+					count++;
+					if(count == 3)
+						i = 5;
+				}
+				else
+				{
+					count = 1;
+					num = rolls[i];
+				}
 
+			}
+			if(count >= 3)
+			{
+				int sum = 0;
+				int j;
+				for(j = 0; j < 5; j++)
+				{
+					sum += rolls[j];
+				}
+				lower[lower_category] = sum;
+			}
+		}
+		else if(lower_category == 1) //four of a kind
+		{
+			int num = rolls[0];
+			int count = 1;
+			int i;
+			for(i = 1; i < 5; i++)
+			{
+				if(rolls[i] == num)
+				{
+					count++;
+					if(count == 4)
+						i = 5;
+				}
+				else
+				{
+					count = 1;
+					num = rolls[i];
+				}
+
+			}
+			if(count >= 4)
+			{
+				int sum = 0;
+				int j;
+				for(j = 0; j < 5; j++)
+				{
+					sum += rolls[j];
+				}
+				lower[lower_category] = sum;
+			}
+		}
+		else if(lower_category == 2) //full house
+		{
+			int num1 = rolls[0];
+			int num2 = 0;
+			int count1 = 1;
+			int count2 = 0;
+			int i;
+			for(i = 1; i < 5; i++)
+			{
+				if(rolls[i] == num1)
+				{
+					count1++;
+				}
+				else if(rolls[i] == num2)
+				{
+					count2++;
+				}
+				else
+				{
+					num2 = rolls[i];
+					count2++;
+				}
+			}
+
+			if((count1 == 2 && count2 == 3) || (count1 == 3 && count2 == 2))
+					lower[lower_category] = 25;
+		}
+		else if(lower_category == 3) //small straight
+		{
+
+		}
+		else if(lower_category == 4) //large straight
+		{
+
+		}
+		else if(lower_category == 5) //yahtzee
+		{
+
+		}
+		else //chance
+		{
+
+		}
+
+	}
+	while(getchar() != '\n'); //flush stdin
 	//ask for subsection (make sure it hasn't been filled - use while loop)
 	//assign score
 }
