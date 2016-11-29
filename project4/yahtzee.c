@@ -272,16 +272,17 @@ void assign_score()
 				lower[lower_category] = sum;
 			}
 		}
-		else if(lower_category == 2) //full house
+		else if(lower_category == 4) //full house
 		{
+			
 			if((rolls[0] == rolls[1]) && ((rolls[2] == rolls[3]) && (rolls[3] == rolls[4])))
 				lower[lower_category] = 25;
 			else if(((rolls[0] == rolls[1]) && (rolls[1] == rolls[2])) && (rolls[3] == rolls[4]))
 				lower[lower_category] = 25;
 		}
-		else if(lower_category == 3) //small straight
+		else if(lower_category == 2) //small straight
 		{
-			int prev = rolls[0]
+			int prev = rolls[0];
 			int count = 1;
 			int i;
 			for(i = 1; i < 5; i++)
@@ -289,7 +290,7 @@ void assign_score()
 				if(rolls[i] == (prev+1))
 				{
 					prev = rolls[i];
-					count++
+					count++;
 				}
 				else
 				{
@@ -299,10 +300,10 @@ void assign_score()
 			}
 			if (count >= 4)
 			{
-				lower[later_category] = 30;
+				lower[lower_category] = 30;
 			}
 		}
-		else if(lower_category == 4) //large straight
+		else if(lower_category == 3) //large straight
 		{
 			int prev = rolls[0];
 			int count = 1;
@@ -333,8 +334,8 @@ void assign_score()
 					i = 5;
 				}
 			}
-			if(is_yahtzee == 1)
-				lower[lower_category] == 50;
+			if(is_yahtzee)
+				lower[lower_category] = 50;
 		}
 		else //chance
 		{
@@ -360,7 +361,7 @@ void show_score()
 	printf("Upper Section:\n"); 
 	printf("Ones:\t\t%d\n", upper[0]);
 	printf("Twos:\t\t%d\n", upper[1]);
-	printf("Threes:\t\t%d\n" upper[2]);
+	printf("Threes:\t\t%d\n", upper[2]);
 	printf("Fours:\t\t%d\n", upper[3]);
 	printf("Fives:\t\t%d\n", upper[4]);
 	printf("Sixes:\t\t%d\n", upper[5]);
@@ -378,9 +379,9 @@ void show_score()
 	printf("\nLower Section:\n");
 	printf("Three of a Kind:\t\t%d\n", lower[0]);
 	printf("Four of a Kind:\t\t%d\n", lower[1]);
-	printf("Full House:\t\t%d\n", lower[2]);
-	printf("Small Straight:\t\t%d\n", lower[3]);
-	printf("Large Straight:\t\t%d\n", lower[4]);
+	printf("Full House:\t\t%d\n", lower[4]);
+	printf("Small Straight:\t\t%d\n", lower[2]);
+	printf("Large Straight:\t\t%d\n", lower[3]);
 	printf("Yahtzee:\t\t%d\n", lower[5]);
 	printf("Chance:\t\t%d\n", lower[6]);
 
