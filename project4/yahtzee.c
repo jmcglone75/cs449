@@ -44,7 +44,8 @@ int main()
 		}
 
 		assign_score();
-		for(j = 0; j < 6; j++)
+		show_score();
+/*		for(j = 0; j < 6; j++)
 		{
 			printf("%d  ", upper[j]);
 		}
@@ -54,7 +55,7 @@ int main()
 		{
 			printf("%d  ", lower[j]);
 		}
-		printf("\n\n");
+		printf("\n\n");*/
 	}
 
 		
@@ -280,7 +281,26 @@ void assign_score()
 		}
 		else if(lower_category == 3) //small straight
 		{
-			
+			int prev = rolls[0]
+			int count = 1;
+			int i;
+			for(i = 1; i < 5; i++)
+			{
+				if(rolls[i] == (prev+1))
+				{
+					prev = rolls[i];
+					count++
+				}
+				else
+				{
+					prev = rolls[i];
+					count = 0;
+				}
+			}
+			if (count >= 4)
+			{
+				lower[later_category] = 30;
+			}
 		}
 		else if(lower_category == 4) //large straight
 		{
@@ -336,14 +356,45 @@ void assign_score()
 //shows upper section, lower section, and upper section bonus
 void show_score()
 {
+	printf("\n--------------------\nScore\n-------------------\n");
+	printf("Upper Section:\n"); 
+	printf("Ones:\t\t%d\n", upper[0]);
+	printf("Twos:\t\t%d\n", upper[1]);
+	printf("Threes:\t\t%d\n" upper[2]);
+	printf("Fours:\t\t%d\n", upper[3]);
+	printf("Fives:\t\t%d\n", upper[4]);
+	printf("Sixes:\t\t%d\n", upper[5]);
+	
+	int upper_total = 0;
+	int bonus= 0;
+	int i;
+	for(i = 0; i < 6; i++)
+	{
+		upper_total += upper[i];
+	}
+	if(upper_total >= 63)
+		bonus = 35;
 
+	printf("\nLower Section:\n");
+	printf("Three of a Kind:\t\t%d\n", lower[0]);
+	printf("Four of a Kind:\t\t%d\n", lower[1]);
+	printf("Full House:\t\t%d\n", lower[2]);
+	printf("Small Straight:\t\t%d\n", lower[3]);
+	printf("Large Straight:\t\t%d\n", lower[4]);
+	printf("Yahtzee:\t\t%d\n", lower[5]);
+	printf("Chance:\t\t%d\n", lower[6]);
+
+	int lower_total = 0;
+	for(i = 0; i < 7; i++)
+	{
+		lower_total += lower[i];
+	}
+
+	printf("\nUpper Section Total:\t\t%d\n", upper_total);
+	printf("Lower Section Total:\t\t%d\n", lower_total);
+	printf("Bonus:\t\t%d\n", bonus);
+	printf("\nTOTAL SCORE:\t\t%d\n", upper_total+lower_total+bonus);	
 }
-
-
-
-
-
-
 
 
 
