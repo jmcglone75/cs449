@@ -292,6 +292,10 @@ void assign_score()
 					prev = rolls[i];
 					count++;
 				}
+				else if(rolls[i] == prev)
+				{
+					prev = rolls[i];
+				}
 				else
 				{
 					prev = rolls[i];
