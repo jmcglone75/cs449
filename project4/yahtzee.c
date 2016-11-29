@@ -273,46 +273,58 @@ void assign_score()
 		}
 		else if(lower_category == 2) //full house
 		{
-			int num1 = rolls[0];
-			int num2 = 0;
-			int count1 = 1;
-			int count2 = 0;
-			int i;
-			for(i = 1; i < 5; i++)
-			{
-				if(rolls[i] == num1)
-				{
-					count1++;
-				}
-				else if(rolls[i] == num2)
-				{
-					count2++;
-				}
-				else
-				{
-					num2 = rolls[i];
-					count2++;
-				}
-			}
-
-			if((count1 == 2 && count2 == 3) || (count1 == 3 && count2 == 2))
-					lower[lower_category] = 25;
+			if((rolls[0] == rolls[1]) && ((rolls[2] == rolls[3]) && (rolls[3] == rolls[4])))
+				lower[lower_category] = 25;
+			else if(((rolls[0] == rolls[1]) && (rolls[1] == rolls[2])) && (rolls[3] == rolls[4]))
+				lower[lower_category] = 25;
 		}
 		else if(lower_category == 3) //small straight
 		{
-
+			
 		}
 		else if(lower_category == 4) //large straight
 		{
+			int prev = rolls[0];
+			int count = 1;
+			int i;
+
+			for(i = 1; i < 5; i++)
+			{
+				if(rolls[i] == (prev+1))
+				{
+					prev = rolls[i];
+					count++;
+				}
+			}
+			if(count == 5)
+				lower[lower_category] = 40;
 
 		}
 		else if(lower_category == 5) //yahtzee
 		{
-
+			int is_yahtzee = 1;
+			int prev = rolls[0];
+			int i;
+			for(i = 1; i < 5; i++)
+			{
+				if(rolls[i] != prev)
+				{
+					is_yahtzee = 0;
+					i = 5;
+				}
+			}
+			if(is_yahtzee == 1)
+				lower[lower_category] == 50;
 		}
 		else //chance
 		{
-
+			int sum = 0;
+			int i;
+			for(i = 0; i < 5; i++)
+			{
+				sum += rolls[i];
+			}
+			lower[lower_category] = sum;
 		}
 
 	}
