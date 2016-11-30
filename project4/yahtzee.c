@@ -6,6 +6,9 @@ peoplesoft: 4007177*/
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 
 //srand((unsigned int)time(NULL));
 int rolls[5]; //array holding 5 rolls of dice
@@ -45,17 +48,6 @@ int main()
 
 		assign_score();
 		show_score();
-/*		for(j = 0; j < 6; j++)
-		{
-			printf("%d  ", upper[j]);
-		}
-//		i = 13;
-		printf("\n\n");
-		for(j = 0; j < 7; j++)
-		{
-			printf("%d  ", lower[j]);
-		}
-		printf("\n\n");*/
 	}
 
 		
@@ -66,8 +58,11 @@ int main()
 //returns random number from 1-6
 int roll()
 {
-	//change to dice from driver
-	return (rand()%6) + 1;
+	unsigned int value;
+	int i = open("/dev/dice", O_RDONLY);
+	int n = read(i, &value, sizeof(int));
+
+	return value;
 }
 
 //allows player to re-roll any of the five dice and changes the values accordingly
