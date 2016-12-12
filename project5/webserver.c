@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <pthread.h>
-
+#include <time.h>
 
 void not_found(void *ptr);
 void *accept_request(void *ptr);
@@ -27,6 +27,8 @@ void *accept_request(void *ptr)
 	struct Connection *conn = (struct Connection*) ptr;
 	int connfd = conn->conn_fd;
 	char *ipString = conn->ip;
+	int file_size;
+	char time_string[50];
 
 	printf("%s\n", ipString);
 	char *server_message;
@@ -81,7 +83,35 @@ void *accept_request(void *ptr)
 		FILE *requested_file = fopen(filename, "r");
 		if(requested_file != NULL) //file found.  send 200 OK
 		{
-				printf("file found\n");
+			printf("file found\n");
+
+			//get size of file
+			fseek(requested_file, 0, SEEK_END);
+			file_size = ftell(requested_file);
+			fseek(requested_file, 0, SEEK_SET);
+
+			server_message = (char *)malloc(250*sizeof(char) + file_size*sizeof(char));
+
+			strcpy(server_message, "\nHTTP/1.1 200 OK\n");
+
+			//get time
+			time_t current_time = time(NULL);
+			struct tm *local_time = localtime(&current_time);
+			strftime(time_string, 50, "Date: %A, %d %B %Y %X %Z\n", local_time);
+			strcat(server_message, time_string);
+
+			strcat(server_message, "Content-Length: ");
+			char num[10];
+			sprintf(num, "%d", file_size);
+			strcat(server_message, num);
+
+			strcat(server_message, "\nConnection: close\nContent-Type: text/html\n\n");
+
+			char *content = (char *)malloc((file_size+1)*sizeof(char));
+			fread(content, 1, file_size, requested_file);
+			strcat(server_message, content);
+			printf("%s\n", server_message);
+
 		}
 		else //file not found
 		{
