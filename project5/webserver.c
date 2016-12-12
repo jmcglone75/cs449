@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -10,6 +11,11 @@
 void not_found(void *ptr);
 void *accept_request(void *ptr);
 
+struct Connection{
+	int conn_fd;
+	char *ip;
+	int port;
+};
 
 void not_found(void *ptr)
 {
@@ -18,7 +24,13 @@ void not_found(void *ptr)
 
 void *accept_request(void *ptr)
 {
-	int *connfd = (int *)ptr;
+	struct Connection *conn = (struct Connection*) ptr;
+	int connfd = conn->conn_fd;
+	char *ipString = conn->ip;
+
+	printf("%s\n", ipString);
+	char *server_message;
+
 	char curr = '\0';  //current char being read in - initialized to null
 	int clrf_count = 0; //counter for number of CLRFs
 	int str_count = 0; //position in string -- used to determine if message is > 4KB
@@ -29,16 +41,15 @@ void *accept_request(void *ptr)
 	{
 		if(str_count > sizeof(buffer) + 1)
 		{
-			not_found(connfd);
 			break;
 		}
 
-		int i = recv(*connfd, &curr, 1, 0); //reads one byte from recv
+		int i = recv(connfd, &curr, 1, 0); //reads one byte from recv
 		if(i > 0)
 		{
 			if(curr == '\r')
 			{
-				i = recv(*connfd, &curr, 1, MSG_PEEK);
+				i = recv(connfd, &curr, 1, MSG_PEEK);
 				if(i > 0 && curr == '\n')
 					clrf_count++;
 				else
@@ -52,6 +63,40 @@ void *accept_request(void *ptr)
 	buffer[str_count] = '\0';
 	printf("buffer:\n");
 	printf("%s\n", buffer);
+
+	//check for http request
+
+	if(strncmp(buffer, "GET ", 4) == 0)
+	{
+		//get filename
+		char filename[50];
+		int index = 4;
+		while(buffer[index] != ' ')
+		{
+			filename[index-4] = buffer[index];
+			index++;
+		}
+		filename[index-4] = '\0';
+
+		FILE *requested_file = fopen(filename, "r");
+		if(requested_file != NULL) //file found.  send 200 OK
+		{
+				printf("file found\n");
+		}
+		else //file not found
+		{
+				server_message = (char *)malloc(50*sizeof(char));
+				strcpy(server_message, "\nHTTP/1.1 404 Not Found\n");
+				printf("file not found\n");
+		}
+	//	printf("%s\n", filename);
+	}
+	else //http request not correct - default to 404
+	{
+		server_message = (char *)malloc(50*sizeof(char));
+		strcpy(server_message, "\nHTTP/1.1 404 Not Found\n");
+	}
+
 	
 	
 	//get client ip and port # to write to stats.txt
@@ -95,11 +140,10 @@ int main()
 		listen(sfd, 10);	
 		connfd = accept(sfd, (struct sockaddr *)&addr, &len);
 
-		port = ntohs(addr.sin_port);
-		ipstring = inet_ntoa(addr.sin_addr);
-
-		printf("IP: %s\n", ipstring);
-		printf("Port: %d\n", port);
+		struct Connection *conn = malloc(sizeof(struct Connection));
+		conn->conn_fd = connfd;
+		conn->ip = inet_ntoa(addr.sin_addr);;
+		conn->port = ntohs(addr.sin_port);	
 		
 		//need to make a struct to pass as argument to accept_request
 		//can't just pass the connfd, also need to pass the client address in 
@@ -114,7 +158,7 @@ int main()
 	
 		//create thread that passes accept_request
 
-		if(pthread_create(&newthread, NULL, (void *) accept_request, &connfd) != 0)
+		if(pthread_create(&newthread, NULL, (void *) accept_request, conn) != 0)
 		{
 			perror("pthread_create");
 		}
