@@ -8,8 +8,7 @@
 #include <pthread.h>
 #include <time.h>
 
-void not_found(void *ptr);
-void *accept_request(void *ptr);
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 struct Connection{
 	int conn_fd;
@@ -17,22 +16,13 @@ struct Connection{
 	int port;
 };
 
-void not_found(void *ptr)
-{
-	return;
-}
-
 void *accept_request(void *ptr)
 {
 	struct Connection *conn = (struct Connection*) ptr;
 	int connfd = conn->conn_fd;
 	char *ipString = conn->ip;
 	int file_size;
-	char time_string[50];
-
-	printf("%s\n", ipString);
 	char *server_message;
-
 	char curr = '\0';  //current char being read in - initialized to null
 	int clrf_count = 0; //counter for number of CLRFs
 	int str_count = 0; //position in string -- used to determine if message is > 4KB
@@ -72,14 +62,13 @@ void *accept_request(void *ptr)
 	{
 		//get filename
 		char filename[50];
-		int index = 4;
+		int index = 5;
 		while(buffer[index] != ' ')
 		{
-			filename[index-4] = buffer[index];
+			filename[index-5] = buffer[index];
 			index++;
 		}
-		filename[index-4] = '\0';
-
+		printf("%s\n", filename);
 		FILE *requested_file = fopen(filename, "r");
 		if(requested_file != NULL) //file found.  send 200 OK
 		{
@@ -95,11 +84,13 @@ void *accept_request(void *ptr)
 			strcpy(server_message, "\nHTTP/1.1 200 OK\n");
 
 			//get time
+			char time_string[50];
 			time_t current_time = time(NULL);
 			struct tm *local_time = localtime(&current_time);
 			strftime(time_string, 50, "Date: %A, %d %B %Y %X %Z\n", local_time);
 			strcat(server_message, time_string);
 
+			//append content length
 			strcat(server_message, "Content-Length: ");
 			char num[10];
 			sprintf(num, "%d", file_size);
@@ -110,16 +101,13 @@ void *accept_request(void *ptr)
 			char *content = (char *)malloc((file_size+1)*sizeof(char));
 			fread(content, 1, file_size, requested_file);
 			strcat(server_message, content);
-			printf("%s\n", server_message);
-
 		}
 		else //file not found
 		{
-				server_message = (char *)malloc(50*sizeof(char));
-				strcpy(server_message, "\nHTTP/1.1 404 Not Found\n");
-				printf("file not found\n");
+			server_message = (char *)malloc(50*sizeof(char));
+			strcpy(server_message, "\nHTTP/1.1 404 Not Found\n");
+			printf("file not found\n");
 		}
-	//	printf("%s\n", filename);
 	}
 	else //http request not correct - default to 404
 	{
@@ -127,6 +115,13 @@ void *accept_request(void *ptr)
 		strcpy(server_message, "\nHTTP/1.1 404 Not Found\n");
 	}
 
+	send(connfd, server_message, strlen(server_message), 0); //send server http response
+	
+	pthread_mutex_lock(&mutex);
+	char *append_string = (char *)malloc(50);
+	strcpy(append_string, "test");
+	FILE *output = fopen("stats.txt", "r+");
+	fwrite(append_string, 1, sizeof(append_string), output);
 	
 	
 	//get client ip and port # to write to stats.txt
@@ -151,13 +146,6 @@ int main()
 	unsigned short port;
 	char *ipstring;
 
-/*	port = ntohs(addr.sin_port);
-	ipstring = inet_ntoa(addr.sin_addr);
-
-	printf("%s\n", ipstring);
-	printf("port:%d\n", port);*/
-
-
 	if(sfd == -1)
 		printf("\nserver could not start\n\n");
 	else
@@ -175,25 +163,20 @@ int main()
 		conn->ip = inet_ntoa(addr.sin_addr);;
 		conn->port = ntohs(addr.sin_port);	
 		
-		//need to make a struct to pass as argument to accept_request
-		//can't just pass the connfd, also need to pass the client address in 
-		//addition to the connfd.
-		//need to use malloc to assign structs (not just one struct and keep overwriting		//it), because we are going to need that data thoughout the program
-
-		
 		if(connfd == -1)
 			printf("client could not connect\n");
 		else
 			printf("client connected succesfully\n");
 	
 		//create thread that passes accept_request
-
-		if(pthread_create(&newthread, NULL, (void *) accept_request, conn) != 0)
+		int threadNum = pthread_create(&newthread, NULL, (void *) accept_request, conn) != 0;
+		if(threadNum != 0)
 		{
 			perror("pthread_create");
 		}
 		else
 		{
+			pthread_join(newthread, NULL);
 			printf("thread successful\n\n");	
 		}
 	}
