@@ -10,6 +10,7 @@
 
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+//wonsun said to use a struct to pass multiple arguments to our thread functions
 struct Connection{
 	int conn_fd;
 	char *ip;
@@ -28,7 +29,9 @@ void *accept_request(void *ptr)
 	int str_count = 0; //position in string -- used to determine if message is > 4KB
 	char buffer[4096];
 	int i;
-
+	
+	//calculate two CLRFs ('/r/n').  HTTP request message is done being read in
+	//when it surpasses the length of 4 KB or the server finds two CLRFs
 	while(clrf_count < 2 && str_count < 4096)
 	{
 		if(str_count > sizeof(buffer) + 1)
@@ -51,11 +54,8 @@ void *accept_request(void *ptr)
 		}
 	}
 	buffer[str_count] = '\0';
-	printf("buffer:\n");
-	printf("%s\n", buffer);
 
-	//check for http request
-
+	//check for http  GET request
 	if(strncmp(buffer, "GET ", 4) == 0)
 	{
 		//get filename
@@ -66,12 +66,9 @@ void *accept_request(void *ptr)
 			filename[index-5] = buffer[index];
 			index++;
 		}
-		printf("%s\n", filename);
 		FILE *requested_file = fopen(filename, "r");
 		if(requested_file != NULL) //file found.  send 200 OK
 		{
-			printf("file found\n");
-
 			//get size of file
 			fseek(requested_file, 0, SEEK_END);
 			file_size = ftell(requested_file);
@@ -96,15 +93,32 @@ void *accept_request(void *ptr)
 
 			strcat(server_message, "\nConnection: close\nContent-Type: text/html\n\n");
 
+			//get file content
 			char *content = (char *)malloc((file_size+1)*sizeof(char));
 			fread(content, 1, file_size, requested_file);
 			strcat(server_message, content);
+			
+			//create string to append to stats.txt
+			char *append_string = (char *)malloc(200*sizeof(char));
+			char *client = (char *)malloc(40*sizeof(char));
+			strcpy(append_string, buffer);
+			strcpy(client, "Client:  ");
+			strcat(client, ipString);
+			strcat(client, ":50770\n");
+			strcat(append_string, client);
+			strcat(append_string, "\n--------------------------\n\n");
+			
+			//set lock around this critical section to prevent a data race--synchronize
+			pthread_mutex_lock(&mutex);
+			FILE *output = fopen("stats.txt", "a+");
+			fwrite(append_string, 1, strlen(append_string), output);
+			fclose(output);
+			pthread_mutex_unlock(&mutex);
 		}
 		else //file not found
 		{
 			server_message = (char *)malloc(50*sizeof(char));
 			strcpy(server_message, "\nHTTP/1.1 404 Not Found\n");
-			printf("file not found\n");
 		}
 	}
 	else //http request not correct - default to 404
@@ -115,22 +129,6 @@ void *accept_request(void *ptr)
 
 	send(connfd, server_message, strlen(server_message), 0); //send server http response
 	
-	pthread_mutex_lock(&mutex);
-	char *append_string = (char *)malloc(200*sizeof(char));
-	char *client = (char *)malloc(40*sizeof(char));
-	strcpy(append_string, buffer);
-	strcpy(client, "Client:  ");
-	strcat(client, ipString);
-	strcat(client, ":50770\n");
-	strcat(append_string, client);
-	strcat(append_string, "\n--------------------------\n\n");
-	FILE *output = fopen("stats.txt", "a+");
-	fwrite(append_string, 1, strlen(append_string), output);
-	fclose(output);
-	pthread_mutex_unlock(&mutex);
-	
-	
-	//get client ip and port # to write to stats.txt
 	return NULL;
 }
 
@@ -183,7 +181,7 @@ int main()
 		else
 		{
 			pthread_join(newthread, NULL);
-			printf("thread successful\n\n");	
+			printf("thread creation successful\n\n");	
 		}
 	}
 }
