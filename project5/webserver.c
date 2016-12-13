@@ -44,10 +44,8 @@ void *accept_request(void *ptr)
 				i = recv(connfd, &curr, 1, MSG_PEEK);
 				if(i > 0 && curr == '\n')
 					clrf_count++;
-				else
-					curr = '\n';
+				
 			}
-			
 			buffer[str_count] = curr;
 			str_count++;
 		}
@@ -118,15 +116,15 @@ void *accept_request(void *ptr)
 	send(connfd, server_message, strlen(server_message), 0); //send server http response
 	
 	pthread_mutex_lock(&mutex);
-	char *append_string = (char *)malloc(150*sizeof(char));
+	char *append_string = (char *)malloc(200*sizeof(char));
 	char *client = (char *)malloc(40*sizeof(char));
 	strcpy(append_string, buffer);
 	strcpy(client, "Client:  ");
 	strcat(client, ipString);
 	strcat(client, ":50770\n");
 	strcat(append_string, client);
+	strcat(append_string, "\n--------------------------\n\n");
 	FILE *output = fopen("stats.txt", "a+");
-	printf("%s\n", append_string);
 	fwrite(append_string, 1, strlen(append_string), output);
 	fclose(output);
 	pthread_mutex_unlock(&mutex);
